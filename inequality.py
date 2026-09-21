@@ -12,7 +12,8 @@ import numpy as np
 from scipy.stats import spearmanr
 
 MEASURES = ["conditional_or", "prevalence_ratio", "slope_index", "unadjusted_pred_ratio",
-            "marginal_or", "pred_at_means", "noncollapsibility", "scale_component"]
+            "marginal_or", "pred_at_means", "noncollapsibility", "scale_component",
+            "p_advantaged", "p_disadvantaged"]
 
 
 def expit(z: np.ndarray) -> np.ndarray:
@@ -173,3 +174,32 @@ def pairwise_reversal(draws: dict, indicators: Sequence[str],
         out.append({"indicator_a": indicators[i], "indicator_b": indicators[j],
                     "p_ordered_differently": float(differs.mean())})
     return sorted(out, key=lambda r: -r["p_ordered_differently"])
+
+
+def favourable_prevalence_ratio(p_advantaged: np.ndarray, p_disadvantaged: np.ndarray) -> np.ndarray:
+    """Prevalence ratio of the complementary (favourable) event, from the two standardised prevalences in per cent."""
+    return (1 - np.asarray(p_disadvantaged) / 100) / (1 - np.asarray(p_advantaged) / 100)
+
+
+def taylor_ci(y: np.ndarray, w: np.ndarray, rank: np.ndarray, covariates: Sequence[np.ndarray],
+              stratum: np.ndarray, psu: np.ndarray) -> tuple[float, float, float, float]:
+    """Taylor-linearised 95% CI for the conditional odds ratio (stratified cluster sandwich, rank fixed)."""
+    X = np.column_stack([np.ones(len(y)), rank] + list(covariates))
+    beta = weighted_logit(X, y, w)
+    p = expit(X @ beta)
+    scores = (w * (y - p))[:, None] * X
+    H = X.T @ (X * (w * p * (1 - p))[:, None])
+    V = np.zeros((X.shape[1], X.shape[1]))
+    for h in np.unique(stratum):
+        in_h = stratum == h
+        units = np.unique(psu[in_h])
+        totals = np.array([scores[in_h & (psu == u)].sum(axis=0) for u in units])
+        n_h = len(totals)
+        if n_h < 2:
+            continue
+        dev = totals - totals.mean(axis=0)
+        V += n_h / (n_h - 1) * dev.T @ dev
+    H_inv = np.linalg.inv(H)
+    se = float(np.sqrt((H_inv @ V @ H_inv)[1, 1]))
+    return (float(np.exp(beta[1])), float(np.exp(beta[1] - 1.959964 * se)),
+            float(np.exp(beta[1] + 1.959964 * se)), se)

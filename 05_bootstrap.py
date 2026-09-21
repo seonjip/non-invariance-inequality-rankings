@@ -1,9 +1,10 @@
 """Design-based bootstrap: 2000 replicates of the whole estimation sequence.
 
-Primary sampling units are resampled with replacement within variance estimation strata,
-taking the observed number of units in each stratum and carrying the survey weights
-unchanged. The rank transformation, the model fit, the standardisation, the computation of
-every estimand and the ranking of indicators are all repeated inside each replicate, so the
+Primary sampling units are resampled with replacement within variance estimation strata
+using the Rao-Wu rescaling bootstrap: in a stratum with n observed units, n - 1 units are
+drawn and the survey weights of the selected units are multiplied by n / (n - 1).
+The rank transformation, the model fit, the standardisation, the computation of every
+estimand and the ranking of indicators are all repeated inside each replicate, so the
 agreement statistics reflect sampling variability in the ranking itself as well as the
 dependence between indicators measured on the same participants.
 
@@ -42,11 +43,12 @@ def run(d: pd.DataFrame, indicators, sep_name: str, seed: int,
     outcome = {i: frame[i].values.astype(float) for i in indicators}
     covariates = {name: column for name, column in zip(covset, _covariates(frame, covset))}
 
-    def one(index: np.ndarray):
+    def one(index: np.ndarray, multiplier: np.ndarray):
         out = {}
         for indicator in indicators:
-            keep = index[~np.isnan(outcome[indicator][index])]
-            w = weight[keep]
+            recorded = ~np.isnan(outcome[indicator][index])
+            keep = index[recorded]
+            w = weight[keep] * multiplier[recorded]
             rank = fractional_rank(code[keep], w, levels)
             result = estimands(outcome[indicator][keep], w, rank,
                                [covariates[n][keep] for n in covset],
@@ -56,7 +58,7 @@ def run(d: pd.DataFrame, indicators, sep_name: str, seed: int,
             out[indicator] = result
         return out
 
-    point = one(np.arange(len(frame)))
+    point = one(np.arange(len(frame)), np.ones(len(frame)))
     if point is None:
         raise RuntimeError("model did not converge in the full sample")
 
@@ -70,11 +72,13 @@ def run(d: pd.DataFrame, indicators, sep_name: str, seed: int,
     draws = {i: [] for i in indicators}
     failures = 0
     for _ in range(n_boot):
-        parts = []
+        parts, multipliers = [], []
         for units in strata.values():
-            picked = rng.integers(0, len(units), len(units))
-            parts.extend(units[k] for k in picked)
-        replicate = one(np.concatenate(parts))
+            n_h = len(units)
+            for k in rng.integers(0, n_h, n_h - 1):          # Rao-Wu: draw n_h - 1 units
+                parts.append(units[k])
+                multipliers.append(np.full(len(units[k]), n_h / (n_h - 1)))
+        replicate = one(np.concatenate(parts), np.concatenate(multipliers))
         if replicate is None:
             failures += 1
             continue

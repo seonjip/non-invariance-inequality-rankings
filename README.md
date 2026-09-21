@@ -1,12 +1,11 @@
-# Scale-dependent ranking of relative inequality across binary health indicators
+# Non-invariance of relative inequality rankings across binary health indicators
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22866369.svg)](https://doi.org/10.5281/zenodo.22866369)
 Analysis code for the manuscript *Scale-dependent ranking of relative inequality across
 binary health indicators*, a secondary analysis of the seventh Korea National Health and
 Nutrition Examination Survey (KNHANES VII, 2016-2018).
 
 The scripts reproduce every estimate reported in the manuscript: Tables 1-4, Figure 1 and
-Supplementary Tables S1-S10.
+Supplementary Tables S1-S11.
 
 ## Data
 
@@ -31,8 +30,8 @@ python 03_construct_sep_rank.py     # weighted fractional (ridit) socioeconomic 
 python 04_primary_analysis.py       # three estimands, slope index, decomposition
 python 05_bootstrap.py              # 2000 design-based bootstrap replicates, rank agreement
 python 06_sensitivity_analyses.py   # seven sets of sensitivity analyses
-python 07_tables.py                 # Tables 1-4 and Supplementary Tables S1-S10 (CSV)
-python 08_figure1.py                # Figure 1 (PNG, 400 dpi)
+python 07_tables.py                 # Tables 1-4 and Supplementary Tables S1-S11 (CSV)
+python 08_figure1.py                # Figure 1 (PNG and TIFF, 600 dpi)
 ```
 
 Intermediate objects are written to `output/` and the final tables and figure to
@@ -44,6 +43,9 @@ the ranking of indicators, is repeated in each of the 2000 replicates.
 
 ## Reproducibility notes
 
+* Variance is estimated with the Rao-Wu rescaling bootstrap (n - 1 primary sampling units
+  drawn per stratum, weights multiplied by n / (n - 1)), with 2000 replicates. Taylor-linearised
+  intervals for the conditional odds ratio are computed as a check (Supplementary Table S11).
 * Bootstrap seeds are fixed in `config.py`, so all reported estimates are exactly
   reproducible.
 * Weighted logistic models are fitted by Newton-Raphson iteration in `inequality.py`; the
@@ -65,7 +67,11 @@ the ranking of indicators, is repeated in each of the 2000 replicates.
 
 ## Citation
 
-If you use this code, please cite the archived release (see `CITATION.cff`).
+If you use this code, please cite the archived release:
+
+Kim S-J. *Analysis code for "Non-invariance of relative inequality rankings across binary health indicators"*. Version 1.1.0. Zenodo; 2026.
+
+The DOI of each archived version is listed on the Zenodo record; versions are also recorded in `CHANGELOG.md`.
 
 ## Licence
 

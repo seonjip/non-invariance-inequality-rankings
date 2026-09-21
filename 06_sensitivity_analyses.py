@@ -19,7 +19,7 @@ import pandas as pd
 
 from config import AGE_GROUPS, COVSETS, INDICATORS, N_BOOT, OUT, SEEDS, SEP
 from importlib import import_module
-from inequality import agreement
+from inequality import agreement, fractional_rank, taylor_ci
 
 run = import_module("05_bootstrap").run
 MIN_CASES = 30  # an indicator is not estimable in a stratum below this many cases or non-cases
@@ -98,6 +98,18 @@ def main() -> None:
     results["complete_case"] = result
     print(f"complete case n = {len(complete)}  rho {result['agreement']['rho']:.2f}  "
           f"discordant {result['agreement']['discordant_pairs']}/{result['agreement']['n_pairs']}")
+
+    # variance check: Taylor-linearised CI for the conditional odds ratio (income axis)
+    taylor = {}
+    frame = d[(d.age >= 19) & d.ho_incm5.notna()]
+    for indicator in INDICATORS:
+        s_ = frame[frame[indicator].notna()]
+        w = s_.wt_oe.values.astype(float)
+        rank = fractional_rank(s_.ho_incm5.values.astype(float), w, [5, 4, 3, 2, 1])
+        cov = [s_.age.values.astype(float), s_.age2.values.astype(float), (s_.sex.values == 2).astype(float)]
+        taylor[indicator] = taylor_ci(s_[indicator].values.astype(float), w, rank, cov,
+                                      s_.kstrata.values, s_.psu.values)
+    results["taylor"] = taylor
 
     with open(OUT / "06_sensitivity.pkl", "wb") as handle:
         pickle.dump(results, handle)
