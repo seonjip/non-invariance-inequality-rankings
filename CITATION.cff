@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+title: >-
+  Analysis code for "Scale-dependent ranking of relative inequality across binary
+  health indicators"
+message: If you use this software, please cite it using these metadata.
+type: software
+authors:
+  - family-names: Kim
+    given-names: Seon-Jip
+    orcid: https://orcid.org/0000-0001-5909-5743
+    affiliation: "Department of Dental Hygiene, College of Health Science, Dankook University, Cheonan, Republic of Korea"
+license: MIT
+version: 1.0.0
+date-released: "2026-09-21"
+keywords:
+  - health inequities
+  - relative index of inequality
+  - odds ratio
+  - prevalence ratio
+  - oral health
+  - epidemiologic methods
