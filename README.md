@@ -1,5 +1,6 @@
 # Scale-dependent ranking of relative inequality across binary health indicators
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22866369.svg)](https://doi.org/10.5281/zenodo.22866369)
 Analysis code for the manuscript *Scale-dependent ranking of relative inequality across
 binary health indicators*, a secondary analysis of the seventh Korea National Health and
 Nutrition Examination Survey (KNHANES VII, 2016-2018).
